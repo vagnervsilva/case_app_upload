@@ -24,6 +24,7 @@ public class LogArquivos {
 		this._id = _id;
 		this.arquivo = arquivo;
 		this.acao = acao;
+		this.autor = autor;
 		this.dataHora = dataHora;
 	}
 

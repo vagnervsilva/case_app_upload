@@ -4,10 +4,10 @@
 </head>
 <body>
 
-	<div th:fragment="urlFileList">
+	<div th:fragment="urlLogList">
 
 		<div class="table-responsive">
-			<table class="table table-striped" id="tblFileList">
+			<table class="table table-striped" id="tblFileLog">
 				<thead>
 					<tr>
 						<th>Arquivos armazenados:</th>
@@ -15,9 +15,11 @@
 				</thead>
 				<tbody>
 					<tr th:each="entry : ${listOfEntries}">
-						<td><a th:href="${entry.href}" th:text="${entry.hrefText}">file</a></td>
-						<td><a href="#" class="btn btn-primary"><span class="glyphicon glyphicon-tasks"></span> Ver detalhes</a></td>
-						<td><a href="#" class="btn btn-primary"><span class="glyphicon glyphicon-search"></span> Ver detalhes</a></td>
+						<td><span th:text="${listaLogs.nome}"></span></td>
+						<td><span th:text="${listaLogs.acao}"></span></td>
+						<td><span th:text="${listaLogs.autor}"></span></td>
+						<td><span th:text="${listaLogs.dataHora}"></span></td>
+
 					</tr>
 				</tbody>
 			</table>

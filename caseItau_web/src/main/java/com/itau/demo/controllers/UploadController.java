@@ -14,6 +14,7 @@ import org.springframework.core.io.Resource;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.oauth2.client.OAuth2AuthorizedClientService;
 import org.springframework.security.oauth2.core.oidc.user.OidcUser;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -37,34 +38,38 @@ import com.itau.demo.clients.LoginsClient;
 import com.itau.demo.clients.LogArquivosClient;
 import com.itau.demo.util.FileSystemStorageService;
 
+
 @Controller
 public class UploadController {
 	
 	@Autowired
-	private FileSystemStorageService storageService;	
+	private FileSystemStorageService storageService;
+	private String nomeArquivo;	
 	
 	private Logins usuario;
-
 
 	@RequestMapping(value = "/", method = RequestMethod.GET)
 	public ModelAndView upload(@AuthenticationPrincipal OidcUser oidcUser) {
 		
-      //  OAuth2AuthorizedClient authorizedClient =
-       //         this.authorizedClientService.loadAuthorizedClient("okta", oidcUser.getName());
 
-   //         OAuth2AccessToken accessToken = authorizedClient.getAccessToken();
-		
 		usuario = new Logins(ObjectId.get(), 
 				oidcUser.getFullName(), 
 				oidcUser.getEmail(), 
 				oidcUser.getIdToken().getTokenValue(),
 				new SimpleDateFormat("dd/MM/yyyy HH:mm:ss").format(new Date()));
 	    
+	    
 		LoginsClient clientApiLogin = new LoginsClient(usuario.getToken()); 
-	    Logins login = clientApiLogin.createLogin(usuario);
-	    return new ModelAndView("upload", "usuario", login);
+	    clientApiLogin.createLogin(usuario);
+	    return new ModelAndView("upload", "usuario", usuario);
 
-	}	
+	}
+	
+	@RequestMapping(value = "/login", method = RequestMethod.POST)
+	public String registraAcesso(Model model) {
+		return usuario.getNome();
+	}
+	
 	
 	@RequestMapping(value = "/files/list", method = RequestMethod.GET)
 	public String listFiles(Model model) {
@@ -82,10 +87,6 @@ public class UploadController {
 						.toString());
 				
 				href.setHrefText(pt.getFileName().toString() + " - " + storageService.readableFileSize(Files.size(pt)));
-				href.setHrefVerDetalhes(MvcUriComponentsBuilder
-						.fromMethodName(UploadController.class, "serveFile", pt.getFileName().toString())
-						.build()
-						.toString());
 				uris.add(href);
 
 			}
@@ -94,18 +95,9 @@ public class UploadController {
 			e.printStackTrace();
 		}
 		model.addAttribute("listOfEntries", uris);
-		return "lista_arquivos :: urlFileList";
+		return "file_list :: urlFileList";
 	}
-	
-	@GetMapping("/detail/{filename:.+}")
-	@ResponseBody
-	public ResponseEntity<Resource> detailFile(@PathVariable String filename) {
-		Resource file = storageService.loadAsResource(filename);
-		registraLogArquivo(file.getFilename(), "Download", new SimpleDateFormat("dd/MM/yyyy HH:mm:ss").format(new Date()));
-		return ResponseEntity.ok()
-				.header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + file.getFilename() + "\"")
-				.body(file);
-	}
+		
 	
 	@GetMapping("/files/{filename:.+}")
 	@ResponseBody
@@ -118,28 +110,39 @@ public class UploadController {
 	}
 	
 	@RequestMapping(value = "/files/upload", method = RequestMethod.POST)
-	public String handleFileUpload(@RequestParam("file") MultipartFile file, RedirectAttributes redirectAttributes) {
+	public String handleFileUpload(@RequestParam("file") MultipartFile file, @RequestParam("descricao") String descricao, RedirectAttributes redirectAttributes) {
 		if (file.getSize() > (10 * 1024 * 1024)) {
-			redirectAttributes.addFlashAttribute("message", "Arquivo maior que 10MB n&atilde; permitido! ");
+			redirectAttributes.addFlashAttribute("message", "Arquivo maior que 10MB proibido! ");
 			
 		} else {
 			storageService.store(file);
 			redirectAttributes.addFlashAttribute("message", "Upload concluido. Arquivo: " + file.getOriginalFilename() + "!");
-			registraArquivoUpload(file.getOriginalFilename(), "Upload");
-			
+			registraArquivoUpload(file.getOriginalFilename(), "Upload", descricao);			
 		    
 		}
 								
 		return "redirect:/";
 	}
 	
-	private void registraArquivoUpload(String nomeArquivo, String acao) {
+    @RequestMapping("/attributes")
+    @ResponseBody
+    public String attributes(@AuthenticationPrincipal OidcUser oidcUser) {
+        return oidcUser.getAttributes().toString();
+    }
+
+    @RequestMapping("/authorities")
+    @ResponseBody
+    public String authorities(@AuthenticationPrincipal OidcUser oidcUser) {
+        return oidcUser.getAuthorities().toString();
+    }
+    
+	private void registraArquivoUpload(String nomeArquivo, String acao, String descricao) {
 		
 		String dataHora = new SimpleDateFormat("dd/MM/yyyy HH:mm:ss").format(new Date());
 				
 		Arquivos arquivo = new Arquivos(ObjectId.get(),
 				nomeArquivo, 
-				"Teste X", 
+				descricao, 
 				usuario.getNome(),
 				dataHora);
 		
@@ -162,7 +165,16 @@ public class UploadController {
 		
 	}
 	
-	
+	@RequestMapping(value = "/files/log/list", method = RequestMethod.GET)
+	public String listaLogs(Model model) {
+		
+		LogArquivosClient clientLogs = new LogArquivosClient();
+		
+		List<LogArquivos> registroLogs = clientLogs.getLogArquivosPorNome(this.nomeArquivo);
+		
+		model.addAttribute("listaLogs", registroLogs);
+		return "lista_logs :: urlLogList";
+	}	
 	
 
 	

@@ -25,7 +25,7 @@ public class DetalhesController {
 	
 	private String nomeArquivo; 
 	
-	@RequestMapping(value = "/detail/{arquivo:.+}", method = RequestMethod.GET)
+/*	@RequestMapping(value = "/detail/{arquivo:.+}", method = RequestMethod.GET)
 	public ModelAndView detalhes(@PathVariable String arquivo) {
 		this.nomeArquivo = arquivo;
 		ArquivosClient clientApiArquivos = new ArquivosClient(); 
@@ -43,6 +43,6 @@ public class DetalhesController {
 		
 		model.addAttribute("listaLogs", registroLogs);
 		return "lista_logs :: urlFileList";
-	}	
+	}	*/
 
 }

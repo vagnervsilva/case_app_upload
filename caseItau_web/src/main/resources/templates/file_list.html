@@ -4,7 +4,7 @@
 </head>
 <body>
 
-	<div th:fragment="urlLogList">
+	<div th:fragment="urlFileList">
 
 		<div class="table-responsive">
 			<table class="table table-striped" id="tblFileList">
@@ -15,15 +15,14 @@
 				</thead>
 				<tbody>
 					<tr th:each="entry : ${listOfEntries}">
-						<td><span th:text="${listaLogs.nome}"></span></td>
-						<td><span th:text="${listaLogs.acao}"></span></td>
-						<td><span th:text="${listaLogs.autor}"></span></td>
-						<td><span th:text="${listaLogs.dataHora}"></span></td>
+						<td><a th:href="${entry.href}" th:text="${entry.hrefText}">file</a></td>
+						
+
 					</tr>
 				</tbody>
 			</table>
 		</div>
-		
+			
 
 	</div>
 

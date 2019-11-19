@@ -40,9 +40,13 @@ public class LoginsController {
 	 
 	  @RequestMapping(value = "/", method = RequestMethod.POST)
 	  public Logins createLogin(@Valid @RequestBody Logins Logins) {
-	    Logins.set_id(ObjectId.get());
-	    repository.save(Logins);
-	    return Logins;
+		Logins existe = repository.findBytoken(Logins.getToken());
+		if (existe == null) {
+			Logins.set_id(ObjectId.get());
+			repository.save(Logins);
+			return Logins;
+		}
+		return existe;
 	  }
 	 
 	  @RequestMapping(value = "/{id}", method = RequestMethod.DELETE)
