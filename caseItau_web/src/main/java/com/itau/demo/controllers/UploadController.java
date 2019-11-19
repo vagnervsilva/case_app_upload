@@ -31,19 +31,20 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 import com.itau.demo.models.Arquivos;
 import com.itau.demo.models.HRefModel;
 import com.itau.demo.models.Logins;
+import com.itau.demo.models.LogArquivos;
 import com.itau.demo.clients.ArquivosClient;
 import com.itau.demo.clients.LoginsClient;
+import com.itau.demo.clients.LogArquivosClient;
 import com.itau.demo.util.FileSystemStorageService;
 
 @Controller
 public class UploadController {
 	
 	@Autowired
-	private FileSystemStorageService storageService;
-	
+	private FileSystemStorageService storageService;	
 	
 	private Logins usuario;
-	private Arquivos arquivo;
+
 
 	@RequestMapping(value = "/", method = RequestMethod.GET)
 	public ModelAndView upload(@AuthenticationPrincipal OidcUser oidcUser) {
@@ -63,13 +64,7 @@ public class UploadController {
 	    Logins login = clientApiLogin.createLogin(usuario);
 	    return new ModelAndView("upload", "usuario", login);
 
-	}
-	
-	@RequestMapping(value = "/login", method = RequestMethod.POST)
-	public String registraAcesso(Model model) {
-		return usuario.getNome();
-	}
-	
+	}	
 	
 	@RequestMapping(value = "/files/list", method = RequestMethod.GET)
 	public String listFiles(Model model) {
@@ -87,6 +82,10 @@ public class UploadController {
 						.toString());
 				
 				href.setHrefText(pt.getFileName().toString() + " - " + storageService.readableFileSize(Files.size(pt)));
+				href.setHrefVerDetalhes(MvcUriComponentsBuilder
+						.fromMethodName(UploadController.class, "serveFile", pt.getFileName().toString())
+						.build()
+						.toString());
 				uris.add(href);
 
 			}
@@ -95,13 +94,24 @@ public class UploadController {
 			e.printStackTrace();
 		}
 		model.addAttribute("listOfEntries", uris);
-		return "file_list :: urlFileList";
+		return "lista_arquivos :: urlFileList";
+	}
+	
+	@GetMapping("/detail/{filename:.+}")
+	@ResponseBody
+	public ResponseEntity<Resource> detailFile(@PathVariable String filename) {
+		Resource file = storageService.loadAsResource(filename);
+		registraLogArquivo(file.getFilename(), "Download", new SimpleDateFormat("dd/MM/yyyy HH:mm:ss").format(new Date()));
+		return ResponseEntity.ok()
+				.header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + file.getFilename() + "\"")
+				.body(file);
 	}
 	
 	@GetMapping("/files/{filename:.+}")
 	@ResponseBody
 	public ResponseEntity<Resource> serveFile(@PathVariable String filename) {
 		Resource file = storageService.loadAsResource(filename);
+		registraLogArquivo(file.getFilename(), "Download", new SimpleDateFormat("dd/MM/yyyy HH:mm:ss").format(new Date()));
 		return ResponseEntity.ok()
 				.header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + file.getFilename() + "\"")
 				.body(file);
@@ -114,31 +124,45 @@ public class UploadController {
 			
 		} else {
 			storageService.store(file);
-			redirectAttributes.addFlashAttribute("message", "Upload concluido. Arquivo: " + file.getOriginalFilename() + file.getSize() + "!");
-			arquivo = new Arquivos(ObjectId.get(),
-					file.getOriginalFilename(), 
-					"Teste X", 
-					usuario.getNome(), 
-					new SimpleDateFormat("dd/MM/yyyy HH:mm:ss").format(new Date()));
+			redirectAttributes.addFlashAttribute("message", "Upload concluido. Arquivo: " + file.getOriginalFilename() + "!");
+			registraArquivoUpload(file.getOriginalFilename(), "Upload");
 			
-			ArquivosClient clientApiArquivos = new ArquivosClient(usuario.getToken()); 
-		    clientApiArquivos.createArquivos(arquivo);
+		    
 		}
 								
 		return "redirect:/";
 	}
 	
-    @RequestMapping("/attributes")
-    @ResponseBody
-    public String attributes(@AuthenticationPrincipal OidcUser oidcUser) {
-        return oidcUser.getAttributes().toString();
-    }
+	private void registraArquivoUpload(String nomeArquivo, String acao) {
+		
+		String dataHora = new SimpleDateFormat("dd/MM/yyyy HH:mm:ss").format(new Date());
+				
+		Arquivos arquivo = new Arquivos(ObjectId.get(),
+				nomeArquivo, 
+				"Teste X", 
+				usuario.getNome(),
+				dataHora);
+		
+		ArquivosClient clientApiArquivos = new ArquivosClient(usuario.getToken()); 
+	    clientApiArquivos.createArquivos(arquivo);
+	    registraLogArquivo(nomeArquivo, acao, dataHora);
 
-    @RequestMapping("/authorities")
-    @ResponseBody
-    public String authorities(@AuthenticationPrincipal OidcUser oidcUser) {
-        return oidcUser.getAuthorities().toString();
-    }
+		
+	}
+	
+	private void registraLogArquivo(String nomeArquivo, String acao, String dataHora) {
+	    LogArquivos log = new LogArquivos(ObjectId.get(),
+				nomeArquivo, 
+				acao, 
+				usuario.getNome(),
+				dataHora);
+
+	    LogArquivosClient clientApiLogArquivos = new LogArquivosClient();
+	    clientApiLogArquivos.createLogArquivos(log);		
+		
+	}
+	
+	
 	
 
 	

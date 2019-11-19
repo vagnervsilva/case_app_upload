@@ -16,6 +16,9 @@ public class ArquivosClient {
 	
 		static final String url = "http://localhost:8080/arquivos/";
 		
+		public ArquivosClient( ) {
+
+		}
 		
 		public ArquivosClient(String accessToken ) {
 
@@ -25,8 +28,14 @@ public class ArquivosClient {
 		}
 		
 		public Arquivos getArquivos(final int numero) {
-
+			
 			return restOperations.getForObject(url, Arquivos.class, numero);
+		}
+		
+		
+		public Arquivos getArquivosPorNome(final String nomeArquivo) {
+			String urlFinal = url + "nome/";
+			return restOperations.getForObject(urlFinal, Arquivos.class, nomeArquivo);
 		}
 		
 		public Arquivos createArquivos(Arquivos arquivo) {

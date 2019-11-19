@@ -34,9 +34,11 @@
 
 		<div class="page-header">
 			<h1>Case Itau Unibanco - Upload Arquivo</h1>
-			<div th:if="${usuario.nome}" th:text="${usuario.nome}"></div>
-			<div>Email: <p th:text="${usuario.email}"></div>
-			<div>Token: <p th:text="${usuario.token}"></div>
+
+			<div class="help-block">Bem vindo, <span th:text="${usuario.nome}"></span>
+			    <span class="glyphicon glyphicon-lock" data-toggle="tooltip" style="cursor:pointer;font-size:20px;" th:title="${usuario.token}"></span>
+			<p>Email: <span th:text="${usuario.email}"></span>
+			</div>
 			
 		</div>
 

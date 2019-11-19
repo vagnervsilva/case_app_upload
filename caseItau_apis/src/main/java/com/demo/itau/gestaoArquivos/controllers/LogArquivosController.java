@@ -31,6 +31,11 @@ public class LogArquivosController {
 	  public LogArquivos getArquivoById(@PathVariable("id") ObjectId id) {
 		  return repository.findBy_id(id);
 	  }
+	  
+	  @RequestMapping(value = "/nome/{nome}", method = RequestMethod.GET)
+	  public List<LogArquivos> getArquivoByNome(@PathVariable("nome") String arquivo) {		 
+	        return repository.findByarquivo(arquivo);
+	  }	  
 	 
 	  @RequestMapping(value = "/{id}", method = RequestMethod.PUT)
 	  public void modifyLogArquivoById(@PathVariable("id") ObjectId id, @Valid @RequestBody LogArquivos registroLog) {

@@ -31,6 +31,11 @@ public class ArquivosController {
 	  public Arquivos getArquivoById(@PathVariable("id") ObjectId id) {
 	    return repository.findBy_id(id);
 	  }
+	  
+	  @RequestMapping(value = "/nome/{nome}", method = RequestMethod.GET)
+	  public Arquivos getArquivoByNome(@PathVariable("nome") String nome) {		 
+	        return repository.findBynome(nome);
+	  }	  
 	 
 	  @RequestMapping(value = "/{id}", method = RequestMethod.PUT)
 	  public void modifyArquivoById(@PathVariable("id") ObjectId id, @Valid @RequestBody Arquivos Arquivos) {
